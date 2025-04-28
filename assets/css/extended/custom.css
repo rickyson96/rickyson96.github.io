@@ -1,0 +1,17 @@
+:root {
+	--link-color: var(--primary);
+	--link-hover-color: #567B7F;
+	--link-underline-shadow: 0 1px 0 var(--link-color);
+	--link-hover-underline-color: #567B7F;
+	--link-hover-underline-shadow: 0 2px 0 var(--link-hover-underline-color);
+	--link-background-color: #D9E4E5;
+}
+
+:root .dark {
+	--link-color: var(--primary);
+	--link-hover-color: #567B7F;
+	--link-underline-shadow: 0 1px 0 var(--link-color);
+	--link-hover-underline-color: #567B7F;
+	--link-hover-underline-shadow: 0 2px 0 var(--link-hover-underline-color);
+	--link-background-color: #3B5559;
+}

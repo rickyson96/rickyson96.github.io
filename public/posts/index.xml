@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on Ricky Anderson</title>
+    <link>http://localhost:1313/posts/</link>
+    <description>Recent content in Posts on Ricky Anderson</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 11 Apr 2025 17:12:00 +0700</lastBuildDate><atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>How I set up my homelab on RaspberryPi using docker</title>
+      <link>http://localhost:1313/posts/20250411t171212--how-i-set-up-my-homelab-on-raspberrypi-using-docker__blog/</link>
+      <pubDate>Fri, 11 Apr 2025 17:12:00 +0700</pubDate>
+      
+      <guid>http://localhost:1313/posts/20250411t171212--how-i-set-up-my-homelab-on-raspberrypi-using-docker__blog/</guid>
+      <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;I&amp;rsquo;ve been owning Raspberry Pi 4 for a while now and had been
+successfully setting up simple homelab services for my own usage. This
+include deploying &lt;a href=&#34;https://pi-hole.net/&#34;&gt;pihole&lt;/a&gt; + &lt;a href=&#34;https://github.com/DNSCrypt/dnscrypt-proxy&#34;&gt;dnscrypt-proxy&lt;/a&gt; for my adblocker and
+installing &lt;a href=&#34;https://nextcloudpi.com/&#34;&gt;nextcloudpi&lt;/a&gt; alongside them.&lt;/p&gt;
+&lt;p&gt;For setting up adblocking + avoiding dns poisoning, I followed one of
+&lt;a href=&#34;https://segmentationfault.xyz/posts/2022-07-30-pihole-dnscrypt.html&#34;&gt;my colleague&amp;rsquo;s write-up&lt;/a&gt; (huge shoutout to Mas Tonny!). And for the
+nextcould part, I used the nextcloudpi setup wizard.&lt;/p&gt;
+&lt;p&gt;To bring it on the go, I&amp;rsquo;ve set up &lt;a href=&#34;https:tailscale.com&#34;&gt;tailscale&lt;/a&gt; for VPN purposes and
+enable my devices to connect with each other.&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<h2 id="introduction">Introduction</h2>
+<p>I&rsquo;ve been owning Raspberry Pi 4 for a while now and had been
+successfully setting up simple homelab services for my own usage. This
+include deploying <a href="https://pi-hole.net/">pihole</a> + <a href="https://github.com/DNSCrypt/dnscrypt-proxy">dnscrypt-proxy</a> for my adblocker and
+installing <a href="https://nextcloudpi.com/">nextcloudpi</a> alongside them.</p>
+<p>For setting up adblocking + avoiding dns poisoning, I followed one of
+<a href="https://segmentationfault.xyz/posts/2022-07-30-pihole-dnscrypt.html">my colleague&rsquo;s write-up</a> (huge shoutout to Mas Tonny!). And for the
+nextcould part, I used the nextcloudpi setup wizard.</p>
+<p>To bring it on the go, I&rsquo;ve set up <a href="https:tailscale.com">tailscale</a> for VPN purposes and
+enable my devices to connect with each other.</p>
+<h2 id="problem">Problem</h2>
+<p>One thing that I should be paying attention to, which I haven&rsquo;t, is
+backup. This holds true, especially for my raspberry pi setup. For
+context, I run my old raspberrypi with single sd-card without any
+backup whatsoever. The result? I&rsquo;ve corrupted my storage twice, not
+something I&rsquo;m proud of.</p>
+<p>Luckily, I haven&rsquo;t gone cold-turkey on backing up all of my data using
+nextcloud. Most of it still lives in Google Drive. And I&rsquo;ll need to
+have backup solution in place before going full in nextcloud
+(especially since my gdrive storage is reaching it&rsquo;s limit).</p>
+<p>That being said, one thing that&rsquo;s really sucks is that I need to redo
+all of those setup again, everytime the sd-card corrupts. Hence the
+need of automated solutions.</p>
+<h2 id="alternatives">Alternatives</h2>
+<p>We have multiple choices of automated installation system that I know of:</p>
+<ul>
+<li>Ansible (a.k.a <a href="https://frontendmasters.com/courses/developer-productivity-v2/">ThePrimeagen choice</a>)</li>
+<li>Nix (or Guix)</li>
+<li>Docker (or other container based installations)</li>
+</ul>
+<p>For me, I&rsquo;ve opted to use Docker, mainly because that&rsquo;s what I&rsquo;m most
+familiar with. I don&rsquo;t have any prior knowledge of Ansible. I&rsquo;ve used
+Nix and NixOS in the past, but I&rsquo;m not really well versed in it, and
+I&rsquo;ve written a bunch of Dockerfiles in the past.</p>
+<p>Understanding docker more in depth also benefits me since I&rsquo;m a
+backend web developer and most of the system I&rsquo;ve been working on in
+the server is containerized.</p>
+<p>Lastly, tailscale is really generous on providing the <a href="https://tailscale.com/kb/1282/docker">guide to getting
+started with tailscale and docker</a>. It&rsquo;s a good writeup and video,
+which I encourage you to go check it out!</p>
+<h2 id="the-system">The System</h2>
+<p>The system currently consists of <a href="https://pi-hole.net/">pihole</a>, <a href="https://www.stirlingpdf.com/">stirling-pdf</a>, and <a href="https:syncthing.net">syncthing</a>.
+All the basic setups follows <a href="https://tailscale.com/kb/1282/docker">tailscale&rsquo;s guide</a>, which I won&rsquo;t repeat
+here since they do a better job at that. I&rsquo;ll write about what I do
+differently here, since we&rsquo;re dealing with DNS resolution inside
+docker (with pihole).</p>
+<p>Usually, this containerized system mount 2 different container&rsquo;s
+network into 1, as if running one of them as sidecar. This is achieved
+using the <code>network_mode: service:tailscale-sidecar</code>. This way, we treat
+those 2 containers as if they&rsquo;re on the same network. The main
+container then can initialize connection to our devices using
+tailscale.</p>
+<p>For my pihole container, I decided to mount 3 containers into 1.
+<code>pihole-ts</code> for tailscale, <code>pihole</code> for pihole, and <code>dnscrypt</code> for
+dnscrypt-proxy. I decided it that way so that <code>pihole</code> can talk directly
+with <code>dnscrypt</code> for resolution purposes without needing to go outside to
+tailscale for that.</p>
+<p>I&rsquo;ve also added port expose on the <code>pihole</code> group, so that my raspberry
+pi can also benefit from those DNS resolver. We do it in the
+<code>pihole-ts</code> container, since the other container attaches themselves to
+the tailscale container, and exposing the parent also exposes the
+others.</p>
+<p>The <code>pihole-ts</code> also uses custom script to boot <code>tailscaled</code>. The idea is
+to generate custom <code>certs.pem</code> file so that we can use <code>https</code> for our
+pihole connections. This scripts got it&rsquo;s idea from
+<a href="https://github.com/ericwastaken/docker-tailscale-sharing-certs">ericwastaken/docker-tailscale-sharing-certs</a>, though you might be
+better off by directly using his container. I might do that later if I
+encounter cert expiring issues, since it also take care of the
+automatic certs renewal, etc. His container doesn&rsquo;t have pihole
+specific requirements though, which is combining the <code>.crt</code> and <code>.key</code>
+into single file <code>.pem</code>.</p>
+<p>I&rsquo;ve also utilized docker-compose environment resolution. This way, I
+can encrypt the environments (which contains sensitive data) and share
+the rest of the configurations. This also works outside of the
+<code>environment</code> key, which is displayed by using the <code>${PWD}</code> environment on
+<code>volumes</code>. I think this is very neat if we need other parts to be
+configured by environments (such as custom exposed ports for the
+compose service, etc).</p>
+<p>The dns parts is also the courtesy of running pihole inside docker
+container. The default docker&rsquo;s dns resolver is unable to find the
+correct server without us manually configure it. Luckily, we&rsquo;re
+running our apps inside tailscale, thus we only need <code>100.100.100.100</code>
+for our tailscale services, and pihole machine&rsquo;s tailscale IP which
+can be obtained in the main machines page and look for our <code>pihole</code>
+machine.</p>
+<p>That&rsquo;s it! If you haven&rsquo;t check out the <a href="https://tailscale.com/kb/1282/docker">tailscale on docker&rsquo;s guide</a>,
+bunch of the stuff that I talked about might make less sense. I
+encourage you to go check it out (it&rsquo;s the third time I mentioned
+this). And while we&rsquo;re on this, you should go check out their <a href="https://www.youtube.com/watch?v=tqvvZhGrciQ">deep
+dive</a> too. It&rsquo;s a video worth watching, simply because you&rsquo;ll get
+deeper understanding on docker&rsquo;s network (unless you&rsquo;re a pro
+already).</p>
+<p>My full configurations can be found <a href="https://github.com/rickyson96/raspberrypi-services/blob/9676f9222f4a47a9fab8fab6bf22d284192d8d79/docker-compose.yaml">here</a>, in case you&rsquo;re wondering
+about my setup.</p>
+]]></content:encoded>
+    </item>
+    
+  </channel>
+</rss>

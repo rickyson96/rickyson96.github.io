@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Blog: How I set up my homelab on RaspberryPi using docker | My New Hugo Site</title>
+<meta name="keywords" content="blog">
+<meta name="description" content="Introduction
+I&rsquo;ve been owning Raspberry Pi 4 for a while now and had been
+successfully setting up simple homelab services for my own usage. This
+include deploying pihole &#43; dnscrypt-proxy for my adblocker and
+installing nextcloudpi alongside them.
+For setting up adblocking &#43; avoiding dns poisoning, I followed one of
+my colleague&rsquo;s write-up (huge shoutout to Mas Tonny!). And for the
+nextcould part, I used the nextcloudpi setup wizard.
+To bring it on the go, I&rsquo;ve set up tailscale for VPN purposes and
+enable my devices to connect with each other.">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/20250411t171212--blog-how-i-set-up-my-homelab-on-raspberrypi-using-docker__blog/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.f49d66caae9ea0fd43f21f29e71a8d3e284517ed770f2aa86fa012953ad3c9ef.css" integrity="sha256-9J1myq6eoP1D8h8p5xqNPihFF&#43;13Dyqob6ASlTrTye8=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/20250411t171212--blog-how-i-set-up-my-homelab-on-raspberrypi-using-docker__blog/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="My New Hugo Site (Alt + H)">My New Hugo Site</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Blog: How I set up my homelab on RaspberryPi using docker
+    </h1>
+    <div class="post-meta"><span title='2025-04-11 17:12:00 +0700 WIB'>April 11, 2025</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="introduction">Introduction<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h2>
+<p>I&rsquo;ve been owning Raspberry Pi 4 for a while now and had been
+successfully setting up simple homelab services for my own usage. This
+include deploying <a href="https://pi-hole.net/">pihole</a> + <a href="https://github.com/DNSCrypt/dnscrypt-proxy">dnscrypt-proxy</a> for my adblocker and
+installing <a href="https://nextcloudpi.com/">nextcloudpi</a> alongside them.</p>
+<p>For setting up adblocking + avoiding dns poisoning, I followed one of
+<a href="https://segmentationfault.xyz/posts/2022-07-30-pihole-dnscrypt.html">my colleague&rsquo;s write-up</a> (huge shoutout to Mas Tonny!). And for the
+nextcould part, I used the nextcloudpi setup wizard.</p>
+<p>To bring it on the go, I&rsquo;ve set up <a href="https:tailscale.com">tailscale</a> for VPN purposes and
+enable my devices to connect with each other.</p>
+<h2 id="problem">Problem<a hidden class="anchor" aria-hidden="true" href="#problem">#</a></h2>
+<p>One thing that I should be paying attention to, which I haven&rsquo;t, is
+backup. This holds true, especially for my raspberry pi setup. For
+context, I run my old raspberrypi with single sd-card without any
+backup whatsoever. The result? I&rsquo;ve corrupted my storage twice, not
+something I&rsquo;m proud of.</p>
+<p>Luckily, I haven&rsquo;t gone cold-turkey on backing up all of my data using
+nextcloud. Most of it still lives in Google Drive. And I&rsquo;ll need to
+have backup solution in place before going full in nextcloud
+(especially since my gdrive storage is reaching it&rsquo;s limit).</p>
+<p>That being said, one thing that&rsquo;s really sucks is that I need to redo
+all of those setup again, everytime the sd-card corrupts. Hence the
+need of automated solutions.</p>
+<h2 id="alternatives">Alternatives<a hidden class="anchor" aria-hidden="true" href="#alternatives">#</a></h2>
+<p>We have multiple choices of automated installation system that I know of:</p>
+<ul>
+<li>Ansible (a.k.a <a href="https://frontendmasters.com/courses/developer-productivity-v2/">ThePrimeagen choice</a>)</li>
+<li>Nix (or Guix)</li>
+<li>Docker (or other container based installations)</li>
+</ul>
+<p>For me, I&rsquo;ve opted to use Docker, mainly because that&rsquo;s what I&rsquo;m most
+familiar with. I don&rsquo;t have any prior knowledge of Ansible. I&rsquo;ve used
+Nix and NixOS in the past, but I&rsquo;m not really well versed in it, and
+I&rsquo;ve written a bunch of Dockerfiles in the past.</p>
+<p>Understanding docker more in depth also benefits me since I&rsquo;m a
+backend web developer and most of the system I&rsquo;ve been working on in
+the server is containerized.</p>
+<p>Lastly, tailscale is really generous on providing the <a href="https://tailscale.com/kb/1282/docker">guide to getting
+started with tailscale and docker</a>. It&rsquo;s a good writeup and video,
+which I encourage you to go check it out!</p>
+<h2 id="the-system">The System<a hidden class="anchor" aria-hidden="true" href="#the-system">#</a></h2>
+<p>The system currently consists of <a href="https://pi-hole.net/">pihole</a>, <a href="https://www.stirlingpdf.com/">stirling-pdf</a>, and <a href="https:syncthing.net">syncthing</a>.
+All the basic setups follows <a href="https://tailscale.com/kb/1282/docker">tailscale&rsquo;s guide</a>, which I won&rsquo;t repeat
+here since they do a better job at that. I&rsquo;ll write about what I do
+differently here, since we&rsquo;re dealing with DNS resolution inside
+docker (with pihole).</p>
+<p>Usually, this containerized system mount 2 different container&rsquo;s
+network into 1, as if running one of them as sidecar. This is achieved
+using the <code>network_mode: service:tailscale-sidecar</code>. This way, we treat
+those 2 containers as if they&rsquo;re on the same network. The main
+container then can initialize connection to our devices using
+tailscale.</p>
+<p>For my pihole container, I decided to mount 3 containers into 1.
+<code>pihole-ts</code> for tailscale, <code>pihole</code> for pihole, and <code>dnscrypt</code> for
+dnscrypt-proxy. I decided it that way so that <code>pihole</code> can talk directly
+with <code>dnscrypt</code> for resolution purposes without needing to go outside to
+tailscale for that.</p>
+<p>I&rsquo;ve also added port expose on the <code>pihole</code> group, so that my raspberry
+pi can also benefit from those DNS resolver. We do it in the
+<code>pihole-ts</code> container, since the other container attaches themselves to
+the tailscale container, and exposing the parent also exposes the
+others.</p>
+<p>The <code>pihole-ts</code> also uses custom script to boot <code>tailscaled</code>. The idea is
+to generate custom <code>certs.pem</code> file so that we can use <code>https</code> for our
+pihole connections. This scripts got it&rsquo;s idea from
+<a href="https://github.com/ericwastaken/docker-tailscale-sharing-certs">ericwastaken/docker-tailscale-sharing-certs</a>, though you might be
+better off by directly using his container. I might do that later if I
+encounter cert expiring issues, since it also take care of the
+automatic certs renewal, etc. His container doesn&rsquo;t have pihole
+specific requirements though, which is combining the <code>.crt</code> and <code>.key</code>
+into single file <code>.pem</code>.</p>
+<p>I&rsquo;ve also utilized docker-compose environment resolution. This way, I
+can encrypt the environments (which contains sensitive data) and share
+the rest of the configurations. This also works outside of the
+<code>environment</code> key, which is displayed by using the <code>${PWD}</code> environment on
+<code>volumes</code>. I think this is very neat if we need other parts to be
+configured by environments (such as custom exposed ports for the
+compose service, etc).</p>
+<p>The dns parts is also the courtesy of running pihole inside docker
+container. The default docker&rsquo;s dns resolver is unable to find the
+correct server without us manually configure it. Luckily, we&rsquo;re
+running our apps inside tailscale, thus we only need <code>100.100.100.100</code>
+for our tailscale services, and pihole machine&rsquo;s tailscale IP which
+can be obtained in the main machines page and look for our <code>pihole</code>
+machine.</p>
+<p>That&rsquo;s it! If you haven&rsquo;t check out the <a href="https://tailscale.com/kb/1282/docker">tailscale on docker&rsquo;s guide</a>,
+bunch of the stuff that I talked about might make less sense. I
+encourage you to go check it out (it&rsquo;s the third time I mentioned
+this). And while we&rsquo;re on this, you should go check out their <a href="https://www.youtube.com/watch?v=tqvvZhGrciQ">deep
+dive</a> too. It&rsquo;s a video worth watching, simply because you&rsquo;ll get
+deeper understanding on docker&rsquo;s network (unless you&rsquo;re a pro
+already).</p>
+<p>My full configurations can be found <a href="https://github.com/rickyson96/raspberrypi-services/blob/9676f9222f4a47a9fab8fab6bf22d284192d8d79/docker-compose.yaml">here</a>, in case you&rsquo;re wondering
+about my setup.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/blog/">Blog</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="http://localhost:1313/">My New Hugo Site</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
