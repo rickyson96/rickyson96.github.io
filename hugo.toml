@@ -44,3 +44,6 @@ url = "https://x.com/ricky_sonz"
 [[params.socialIcons]]
 name = "github"
 url = "https://github.com/rickyson96"
+
+[caches.images]
+dir = ':cacheDir/images'
